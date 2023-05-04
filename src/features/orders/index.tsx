@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from "react"
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { initialize, cleanup } from "./slice"
 import { askSelector, bidSelector } from "./selectors";
+import Order from "../../components/Order";
 
 export default function Orders() {
   const dispatch = useAppDispatch();
@@ -31,19 +32,11 @@ export default function Orders() {
     <div className="flex flex-col bg-slate-50 p-4 rounded drop-shadow">
       <div className="grid grid-cols-2 divide-x divide-solid divide-slate-500">
         <div className="flex flex-col divide-y divide-dashed divide-slate-300">
-          {askOrders.map(([price, count, amount]) => <div className="grid grid-cols-3" key={price}>
-            <div>{count}</div>
-            <div>{amount}</div>
-            <div>{price}</div>
-          </div>)}
+          {askOrders.map(([price, count, amount]) => <Order price={price} count={count} amount={amount} key={price} />)}
         </div>
 
         <div className="flex flex-col divide-y divide-dashed divide-slate-300">
-          {bidOrders.map(([price, count, amount]) => <div className="grid grid-cols-3" key={price}>
-            <div>{price}</div>
-            <div>{amount}</div>
-            <div>{count}</div>
-          </div>)}
+          {bidOrders.map(([price, count, amount]) => <Order price={price} count={count} amount={amount} key={price} reversed />)}
         </div>
       </div>
     </div>
