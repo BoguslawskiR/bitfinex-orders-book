@@ -1,9 +1,8 @@
-import "./App.css"
 import Orders from "./features/orders"
 
 function App() {
   return (
-    <div className="App">
+    <div className="text-center">
       <Orders />
     </div>
   )

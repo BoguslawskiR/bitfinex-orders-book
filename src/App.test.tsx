@@ -3,12 +3,12 @@ import { Provider } from "react-redux"
 import { store } from "./app/store"
 import App from "./App"
 
-test("renders learn react link", () => {
+test("renders precision dropdown", () => {
   const { getByText } = render(
     <Provider store={store}>
       <App />
     </Provider>,
   )
 
-  expect(getByText(/learn/i)).toBeInTheDocument()
+  expect(getByText(/precision/i)).toBeInTheDocument()
 })
