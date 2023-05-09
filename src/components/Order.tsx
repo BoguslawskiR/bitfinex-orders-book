@@ -7,10 +7,11 @@ interface Props {
   amount: number;
   total: number;
   reversed?: boolean;
-  type: 'bid' | 'ask'
+  type: 'bid' | 'ask';
+  max: number;
 }
 
-function Order({ price, count, amount, total, reversed, type }: Props) {
+function Order({ price, count, amount, total, reversed, type, max }: Props) {
   return <div className="grid grid-cols-4 relative">
     <div className={reversed ? 'order-4' : 'order-1'}>{count}</div>
     <div className={reversed ? 'order-3' : 'order-2'}>{Math.abs(amount).toFixed(3)}</div>
@@ -24,7 +25,7 @@ function Order({ price, count, amount, total, reversed, type }: Props) {
           type === 'bid' ? 'bg-green-800' : 'bg-red-800'
         )
       }
-      style={{ width: `${(Math.abs(total) / 50) * 100}%` }}
+      style={{ width: `${(Math.abs(total) / max) * 100}%` }}
     />
   </div>;
 }

@@ -1,8 +1,9 @@
-import { Fragment, useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { initialize, cleanup } from "./slice"
 import { askSelector, bidSelector } from "./selectors";
 import Order from "../../components/Order";
+import { maxBy } from "lodash";
 
 export default function Orders() {
   const dispatch = useAppDispatch();
@@ -11,11 +12,15 @@ export default function Orders() {
   const [precision, setPrecision] = useState('P0');
 
   useEffect(() => {
-    dispatch(initialize({ precision, symbol: 'tBTCUSD' }));
+    dispatch(initialize({ precision, symbol: 'tXRPUSD' }));
     return () => {
       dispatch(cleanup());
     };
   }, [precision]);
+
+  const maxTotal = useMemo(() => {
+    return Math.abs(maxBy([...Object.values(askOrders), ...Object.values(bidOrders)], (el) => Math.abs(el.total))?.total || 50) * 1.1;
+  }, [askOrders, bidOrders])
 
   return <div className="flex flex-col gap-6 p-6">
     <div className="flex flex-col gap-1 w-1/5">
@@ -42,7 +47,7 @@ export default function Orders() {
             Object
               .entries(bidOrders)
               .sort(([aPrice], [bPrice]) => Number(bPrice) - Number(aPrice))
-              .map(([price, { count, amount, total }]) => <Order total={total} price={Number(price)} count={count} amount={amount} key={price} type="bid"/>)
+              .map(([price, { count, amount, total }]) => <Order total={total} price={Number(price)} count={count} amount={amount} key={price} type="bid" max={maxTotal}/>)
           }
         </div>
         <div className="flex flex-col">
@@ -56,7 +61,7 @@ export default function Orders() {
             Object
               .entries(askOrders)
               .sort(([aPrice], [bPrice]) => Number(aPrice) - Number(bPrice))
-              .map(([price, { count, amount, total }]) => <Order total={total} price={Number(price)} count={count} amount={amount} key={price} reversed type="ask"/>)
+              .map(([price, { count, amount, total }]) => <Order total={total} price={Number(price)} count={count} amount={amount} key={price} reversed type="ask" max={maxTotal}/>)
           }
         </div>
       </div>
