@@ -11,7 +11,7 @@ export default function Orders() {
   const [precision, setPrecision] = useState('P0');
 
   useEffect(() => {
-    dispatch(initialize({ precision, symbol: 'tXRPUSD' }));
+    dispatch(initialize({ precision, symbol: 'tBTCUSD' }));
     return () => {
       dispatch(cleanup());
     };
@@ -29,23 +29,35 @@ export default function Orders() {
       </select>
     </div>
 
-    <div className="flex flex-col bg-slate-50 p-4 rounded drop-shadow">
-      <div className="grid grid-cols-2 divide-x divide-solid divide-slate-500">
-        <div className="flex flex-col divide-y divide-dashed divide-slate-300">
-          <div className="grid grid-cols-4">
+    <div className="flex flex-col bg-slate-700 text-white text-sm p-4 rounded drop-shadow">
+      <div className="grid grid-cols-2">
+        <div className="flex flex-col">
+          <div className="grid grid-cols-4 text-slate-300">
             <div>Count</div>
+            <div>Amount</div>
             <div>Total</div>
             <div>Price</div>
           </div>
-          {Object.entries(askOrders).map(([price, { count, amount }]) => <Order price={Number(price)} count={count} amount={amount} key={price} />)}
+          {
+            Object
+              .entries(bidOrders)
+              .sort(([aPrice], [bPrice]) => Number(bPrice) - Number(aPrice))
+              .map(([price, { count, amount, total }]) => <Order total={total} price={Number(price)} count={count} amount={amount} key={price} type="bid"/>)
+          }
         </div>
-        <div className="flex flex-col divide-y divide-dashed divide-slate-300">
-          <div className="grid grid-cols-4">
+        <div className="flex flex-col">
+          <div className="grid grid-cols-4 text-slate-300">
             <div>Price</div>
             <div>Total</div>
+            <div>Amount</div>
             <div>Count</div>
           </div>
-          {Object.entries(bidOrders).map(([price, { count, amount }]) => <Order price={Number(price)} count={count} amount={amount} key={price} reversed />)}
+          {
+            Object
+              .entries(askOrders)
+              .sort(([aPrice], [bPrice]) => Number(aPrice) - Number(bPrice))
+              .map(([price, { count, amount, total }]) => <Order total={total} price={Number(price)} count={count} amount={amount} key={price} reversed type="ask"/>)
+          }
         </div>
       </div>
     </div>

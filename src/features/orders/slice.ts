@@ -15,6 +15,7 @@ type Price = number;
 interface Order {
   count: number;
   amount: number;
+  total: number;
 };
 
 interface State {
@@ -25,6 +26,15 @@ interface State {
     bid: Record<Price, Order>;
   }
 }
+
+const reduceOrdersWithTotal = (orders: number[][]) => (orders as [number, number, number][]).reduce((acc, [price, count, amount], index) => {
+  acc.push([price, count, amount, index === 0 ? amount : acc[index - 1][3] + amount]);
+  return acc;
+}, [] as [number, number, number, number][])
+  .reduce((acc, [price, count, amount, total]) => {
+    acc[price] = { count, amount, total };
+    return acc;
+  }, {} as Record<Price, Order>)
 
 export const ordersBookSlice = createSlice({
   name: 'ordersBook',
@@ -43,20 +53,14 @@ export const ordersBookSlice = createSlice({
         isLoading: false,
         id,
         orders: {
-          ask: orders
+          ask: reduceOrdersWithTotal(orders
             .filter(([_, __, amount]) => amount <= 0)
             .sort((a, b) => a[0] - b[0])
-            .reduce((acc, [price, count, amount]) => {
-              acc[price] = { count, amount };
-              return acc;
-            }, {} as Record<Price, Order>),
-          bid: orders
+          ),
+          bid: reduceOrdersWithTotal(orders
             .filter(([_, __, amount]) => amount > 0)
             .sort((a, b) => b[0] - a[0])
-            .reduce((acc, [price, count, amount]) => {
-              acc[price] = { count, amount };
-              return acc;
-            }, {} as Record<Price, Order>),
+          ),
         }
       };
     },
@@ -80,11 +84,22 @@ export const ordersBookSlice = createSlice({
       // 3.1 if amount > 0 then add/update bids
       // 3.2 if amount < 0 then add/update asks
       if (count > 0 && amount > 0) {
-        newState.orders.bid[price] = { count, amount };
+        newState.orders.bid[price] = { count, amount, total: 0 };
       }
       if (count > 0 && amount < 0) {
-        newState.orders.ask[price] = { count, amount };
+        newState.orders.ask[price] = { count, amount, total: 0 };
       }
+
+      newState.orders.ask = reduceOrdersWithTotal(
+        Object.entries(newState.orders.ask)
+          .map(([price, { count, amount }]) => [Number(price), count, amount])
+          .sort((a, b) => a[0] - b[0])
+      );
+      newState.orders.bid = reduceOrdersWithTotal(
+        Object.entries(newState.orders.bid)
+          .map(([price, { count, amount }]) => [Number(price), count, amount])
+          .sort((a, b) => b[0] - a[0])
+      );
 
       return newState;
     },
