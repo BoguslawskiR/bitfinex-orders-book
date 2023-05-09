@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { pullAt } from 'lodash';
 import cloneDeep from 'lodash/cloneDeep';
 
 export type Channel = 'redux' | 'general'
@@ -11,39 +10,92 @@ export interface Message {
   text: string
 }
 
+type Price = number;
+
+interface Order {
+  count: number;
+  amount: number;
+};
+
+interface State {
+  id?: number;
+  isLoading: boolean;
+  orders: {
+    ask: Record<Price, Order>;
+    bid: Record<Price, Order>;
+  }
+}
+
 export const ordersBookSlice = createSlice({
   name: 'ordersBook',
   reducers: {
     initialize(state, _: PayloadAction<{ precision: string; symbol: string; }>) {
-      return state;
+      return { ...state, isLoading: true };
     },
     cleanup() {
-      return [];
+      return { isLoading: false, orders: { ask: {}, bid: {} } };
     },
     overrideBook(_, payloadAction: PayloadAction<[number, [number, number, number][]]>) {
-      return payloadAction.payload;
+      const id = payloadAction.payload[0];
+      const orders = cloneDeep(payloadAction.payload[1]);
+
+      return {
+        isLoading: false,
+        id,
+        orders: {
+          ask: orders
+            .filter(([_, __, amount]) => amount <= 0)
+            .sort((a, b) => a[0] - b[0])
+            .reduce((acc, [price, count, amount]) => {
+              acc[price] = { count, amount };
+              return acc;
+            }, {} as Record<Price, Order>),
+          bid: orders
+            .filter(([_, __, amount]) => amount > 0)
+            .sort((a, b) => b[0] - a[0])
+            .reduce((acc, [price, count, amount]) => {
+              acc[price] = { count, amount };
+              return acc;
+            }, {} as Record<Price, Order>),
+        }
+      };
     },
     updateOrder(state, payloadAction: PayloadAction<[number, number, number]>) {
+      if (!Array.isArray(payloadAction.payload)) return state;
       const newState = cloneDeep(state);
+      const [price, count, amount] = payloadAction.payload;
 
-      if (!Array.isArray(newState[1])) return state;
+      // when count = 0 then you have to delete the price level.
+      // 4.1 if amount = 1 then remove from bids
+      // 4.2 if amount = -1 then remove from asks
 
-      const indexToUpdate = newState[1].findIndex((order) => order[0] === payloadAction.payload[0]);
-
-      if (indexToUpdate !== -1) {
-        newState[1][indexToUpdate] = payloadAction.payload;
-      } else if (payloadAction.payload[1] !== 0) {
-        newState[1].push(payloadAction.payload)
+      if (count === 0 && amount === 1) {
+        delete newState.orders.bid[price];
+      }
+      if (count === 0 && amount === -1) {
+        delete newState.orders.ask[price];
       }
 
-      if (payloadAction.payload[1] === 0 && indexToUpdate !== -1) {
-        pullAt(newState[1], [indexToUpdate]);
+      // when count > 0 then you have to add or update the price level
+      // 3.1 if amount > 0 then add/update bids
+      // 3.2 if amount < 0 then add/update asks
+      if (count > 0 && amount > 0) {
+        newState.orders.bid[price] = { count, amount };
+      }
+      if (count > 0 && amount < 0) {
+        newState.orders.ask[price] = { count, amount };
       }
 
-      return newState as [number, [number, number, number][]];
+      return newState;
     },
   },
-  initialState: [] as [number, [number, number, number][]] | [],
+  initialState: {
+    isLoading: false,
+    orders: {
+      ask: {},
+      bid: {},
+    }
+  } as State,
 });
 
 export const { initialize, cleanup, overrideBook, updateOrder } = ordersBookSlice.actions

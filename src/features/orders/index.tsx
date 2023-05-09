@@ -32,11 +32,20 @@ export default function Orders() {
     <div className="flex flex-col bg-slate-50 p-4 rounded drop-shadow">
       <div className="grid grid-cols-2 divide-x divide-solid divide-slate-500">
         <div className="flex flex-col divide-y divide-dashed divide-slate-300">
-          {askOrders.map(([price, count, amount]) => <Order price={price} count={count} amount={amount} key={price} />)}
+          <div className="grid grid-cols-4">
+            <div>Count</div>
+            <div>Total</div>
+            <div>Price</div>
+          </div>
+          {Object.entries(askOrders).map(([price, { count, amount }]) => <Order price={Number(price)} count={count} amount={amount} key={price} />)}
         </div>
-
         <div className="flex flex-col divide-y divide-dashed divide-slate-300">
-          {bidOrders.map(([price, count, amount]) => <Order price={price} count={count} amount={amount} key={price} reversed />)}
+          <div className="grid grid-cols-4">
+            <div>Price</div>
+            <div>Total</div>
+            <div>Count</div>
+          </div>
+          {Object.entries(bidOrders).map(([price, { count, amount }]) => <Order price={Number(price)} count={count} amount={amount} key={price} reversed />)}
         </div>
       </div>
     </div>
